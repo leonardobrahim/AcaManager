@@ -11,20 +11,27 @@ export function BottomNav() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 flex h-16 items-center justify-around border-t border-slate-200 bg-white pb-safe sm:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 flex h-16 items-center justify-around border-t border-slate-200/60 bg-white/90 backdrop-blur-md pb-safe sm:hidden">
       {links.map(({ to, icon: Icon, label }) => (
         <NavLink
           key={to}
           to={to}
           className={({ isActive }) =>
             cn(
-              'flex flex-col items-center justify-center w-full h-full space-y-1 text-slate-500 transition-colors',
-              isActive && 'text-slate-900 font-medium'
+              'relative flex flex-col items-center justify-center w-full h-full space-y-1 text-slate-500 transition-all duration-200',
+              isActive && 'text-indigo-600 font-medium'
             )
           }
         >
-          <Icon className="h-5 w-5" />
-          <span className="text-[10px]">{label}</span>
+          {({ isActive }) => (
+            <>
+              <Icon className={cn("h-5 w-5 transition-transform duration-200", isActive && "scale-110")} />
+              <span className="text-[10px]">{label}</span>
+              {isActive && (
+                <span className="absolute top-1 w-1 h-1 bg-indigo-600 rounded-full" />
+              )}
+            </>
+          )}
         </NavLink>
       ))}
     </nav>

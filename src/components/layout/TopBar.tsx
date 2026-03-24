@@ -11,28 +11,37 @@ export function TopBar() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 hidden h-16 w-full items-center border-b border-slate-200 bg-white px-6 sm:flex">
-      <div className="flex items-center gap-2 font-semibold text-slate-900 mr-8">
-        <GraduationCap className="h-6 w-6 text-indigo-600" />
-        <span>AcaManager</span>
+    <header className="sticky top-0 z-50 hidden h-16 w-full items-center justify-between border-b border-slate-200/60 bg-white/80 backdrop-blur-md px-6 sm:flex">
+      <div className="flex items-center gap-8">
+        <div className="flex items-center gap-2 font-bold text-slate-900 text-lg tracking-tight">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600">
+            <GraduationCap className="h-5 w-5 text-white" />
+          </div>
+          <span>AcaManager</span>
+        </div>
+        <nav className="flex items-center space-x-1 text-sm font-medium">
+          {links.map(({ to, icon: Icon, label }) => (
+            <NavLink
+              key={to}
+              to={to}
+              className={({ isActive }) =>
+                cn(
+                  'flex items-center gap-2 rounded-lg px-3 py-2 text-slate-500 transition-all hover:text-slate-900 hover:bg-slate-50',
+                  isActive && 'bg-slate-100/80 text-indigo-600 hover:bg-slate-100/80 hover:text-indigo-600'
+                )
+              }
+            >
+              <Icon className="h-4 w-4" />
+              {label}
+            </NavLink>
+          ))}
+        </nav>
       </div>
-      <nav className="flex items-center space-x-6 text-sm font-medium">
-        {links.map(({ to, icon: Icon, label }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) =>
-              cn(
-                'flex items-center gap-2 text-slate-500 transition-colors hover:text-slate-900',
-                isActive && 'text-slate-900'
-              )
-            }
-          >
-            <Icon className="h-4 w-4" />
-            {label}
-          </NavLink>
-        ))}
-      </nav>
+      <div className="flex items-center gap-4">
+        <div className="h-8 w-8 rounded-full bg-slate-200 border-2 border-white shadow-sm overflow-hidden">
+          <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User avatar" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+        </div>
+      </div>
     </header>
   );
 }

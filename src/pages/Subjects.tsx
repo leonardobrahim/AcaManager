@@ -26,16 +26,19 @@ export function Subjects() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Disciplinas</h1>
-        <Button onClick={() => setIsAdding(!isAdding)} size="sm">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Disciplinas</h1>
+          <p className="text-slate-500 mt-1">Gerencie suas matérias e acompanhe suas faltas.</p>
+        </div>
+        <Button onClick={() => setIsAdding(!isAdding)} className="w-full sm:w-auto shadow-sm">
           <Plus className="mr-2 h-4 w-4" /> Adicionar Disciplina
         </Button>
       </div>
 
       {isAdding && (
-        <Card className="border-indigo-100 bg-indigo-50/50">
-          <CardContent className="p-4 sm:p-6">
+        <Card className="border-indigo-100 bg-indigo-50/30 shadow-sm">
+          <CardContent className="p-6">
             <form onSubmit={handleAddSubject} className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
@@ -110,40 +113,42 @@ export function Subjects() {
             else if (percentage >= 50) statusColor = 'bg-amber-500';
 
             return (
-              <Card key={subject.id} className="overflow-hidden flex flex-col">
-                <div className="h-2 w-full" style={{ backgroundColor: subject.color }} />
-                <CardHeader className="pb-2 flex flex-row items-start justify-between space-y-0">
-                  <div>
-                    <CardTitle className="text-lg">{subject.name}</CardTitle>
-                    {subject.professor && <p className="text-sm text-slate-500 mt-1">{subject.professor}</p>}
+              <Card key={subject.id} className="overflow-hidden flex flex-col hover:shadow-md transition-shadow duration-200">
+                <CardHeader className="pb-2 flex flex-row items-start justify-between space-y-0 relative">
+                  <div className="flex gap-3">
+                    <div className="mt-1 h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: subject.color }} />
+                    <div>
+                      <CardTitle className="text-lg font-bold text-slate-900">{subject.name}</CardTitle>
+                      {subject.professor && <p className="text-sm font-medium text-slate-500 mt-0.5">{subject.professor}</p>}
+                    </div>
                   </div>
-                  <Button variant="ghost" size="icon" className="-mr-2 -mt-2 h-8 w-8 text-slate-400 hover:text-red-600" onClick={() => deleteSubject(subject.id)}>
+                  <Button variant="ghost" size="icon" className="-mr-2 -mt-2 h-8 w-8 text-slate-400 hover:text-red-600 hover:bg-red-50" onClick={() => deleteSubject(subject.id)}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </CardHeader>
                 <CardContent className="flex-1 flex flex-col justify-end pt-4">
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="font-medium text-slate-700">Faltas</span>
-                      <span className="font-bold text-slate-900">{absenceCount} / {subject.maxAbsences}</span>
+                      <span className="font-medium text-slate-500">Faltas</span>
+                      <span className="font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded-md">{absenceCount} / {subject.maxAbsences}</span>
                     </div>
-                    <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                    <div className="h-2.5 w-full rounded-full bg-slate-100 overflow-hidden">
                       <div 
-                        className={cn("h-full transition-all duration-500", statusColor)} 
+                        className={cn("h-full transition-all duration-500 rounded-full", statusColor)} 
                         style={{ width: `${Math.min(percentage, 100)}%` }} 
                       />
                     </div>
-                    <div className="flex justify-between items-center pt-2">
+                    <div className="flex justify-between items-center pt-2 border-t border-slate-100">
                       {percentage >= 80 ? (
-                        <span className="text-xs font-medium text-red-600 flex items-center gap-1">
-                          <AlertTriangle className="h-3 w-3" /> Zona de perigo
+                        <span className="text-xs font-bold uppercase tracking-wider text-red-600 flex items-center gap-1">
+                          <AlertTriangle className="h-3 w-3" /> Perigo
                         </span>
                       ) : (
-                        <span className="text-xs text-slate-500">
+                        <span className="text-xs font-medium text-slate-500">
                           {subject.maxAbsences - absenceCount} restantes
                         </span>
                       )}
-                      <Button size="sm" variant="secondary" onClick={() => handleAddAbsence(subject.id)}>
+                      <Button size="sm" variant="secondary" onClick={() => handleAddAbsence(subject.id)} className="h-8 text-xs">
                         <Plus className="mr-1 h-3 w-3" /> Adicionar Falta
                       </Button>
                     </div>
