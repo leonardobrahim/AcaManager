@@ -2,12 +2,20 @@ export type Priority = 'low' | 'medium' | 'high';
 export type StudyStatus = 'not_started' | 'studying' | 'ready';
 export type TaskStatus = 'pending' | 'completed';
 
+export interface ClassSchedule {
+  dayOfWeek: number; // 1 = Segunda, 2 = Terça, ..., 5 = Sexta
+  startTime: string; // Ex: "08:00"
+  endTime: string;   // Ex: "10:00"
+  room?: string;     // Ex: "Sala 204"
+}
+
 export interface Subject {
   id: string;
   name: string;
   professor?: string;
   maxAbsences: number;
   color: string;
+  schedules?: ClassSchedule[];
 }
 
 export interface Absence {

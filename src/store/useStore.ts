@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Subject, Absence, Assignment, Exam, StudyTopic } from '../types';
 
 interface AppState {
+  theme: 'light' | 'dark';
   subjects: Subject[];
   absences: Absence[];
   assignments: Assignment[];
@@ -11,6 +12,7 @@ interface AppState {
   studyTopics: StudyTopic[];
 
   // Actions
+  toggleTheme: () => void;
   addSubject: (subject: Omit<Subject, 'id'>) => void;
   updateSubject: (id: string, subject: Partial<Subject>) => void;
   deleteSubject: (id: string) => void;
@@ -34,11 +36,14 @@ interface AppState {
 export const useStore = create<AppState>()(
   persist(
     (set) => ({
+      theme: 'light',
       subjects: [],
       absences: [],
       assignments: [],
       exams: [],
       studyTopics: [],
+
+      toggleTheme: () => set((state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' })),
 
       addSubject: (subject) => set((state) => ({ subjects: [...state.subjects, { ...subject, id: uuidv4() }] })),
       updateSubject: (id, updated) => set((state) => ({
