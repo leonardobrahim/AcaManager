@@ -67,6 +67,12 @@ export function Tasks() {
     notes: "",
   });
 
+  // Função para corrigir o bug de fuso horário (Força a data para as 12:00 local)
+  const parseLocal = (dateStr: string) => {
+    if (!dateStr) return new Date();
+    return new Date(dateStr + "T12:00:00");
+  };
+
   const resetForms = () => {
     setNewAssignment({
       title: "",
@@ -146,20 +152,31 @@ export function Tasks() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Lógica de Filtro e Ordenação
+  // Lógica de Filtro e Ordenação (Agora joga as concluídas para o fim)
   const filteredAssignments = assignments.filter(
     (a) => selectedSubject === "all" || a.subjectId === selectedSubject,
   );
-  const sortedAssignments = [...filteredAssignments].sort(
-    (a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime(),
-  );
+  const sortedAssignments = [...filteredAssignments].sort((a, b) => {
+    // 1. Verifica se está completa e joga pro final
+    if (a.status === "completed" && b.status !== "completed") return 1;
+    if (a.status !== "completed" && b.status === "completed") return -1;
+    // 2. Se ambas tiverem o mesmo status, ordena pela data mais próxima
+    return parseLocal(a.dueDate).getTime() - parseLocal(b.dueDate).getTime();
+  });
 
   const filteredExams = exams.filter(
     (e) => selectedSubject === "all" || e.subjectId === selectedSubject,
   );
-  const sortedExams = [...filteredExams].sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
-  );
+  const sortedExams = [...filteredExams].sort((a, b) => {
+    // Para as provas, se a data já passou, consideramos finalizada e vai pro fim
+    const aPast = isPast(parseLocal(a.date)) && !isToday(parseLocal(a.date));
+    const bPast = isPast(parseLocal(b.date)) && !isToday(parseLocal(b.date));
+
+    if (aPast && !bPast) return 1;
+    if (!aPast && bPast) return -1;
+
+    return parseLocal(a.date).getTime() - parseLocal(b.date).getTime();
+  });
 
   return (
     <div className="space-y-6">
@@ -177,7 +194,7 @@ export function Tasks() {
           <select
             value={selectedSubject}
             onChange={(e) => setSelectedSubject(e.target.value)}
-            className="flex h-10 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:focus-visible:ring-indigo-400"
+            className="cursor-pointer flex h-10 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:focus-visible:ring-indigo-400"
           >
             <option value="all">Todas as Disciplinas</option>
             {subjects.map((s) => (
@@ -194,7 +211,7 @@ export function Tasks() {
                 resetForms();
               }}
               className={cn(
-                "px-5 py-2 text-sm font-semibold rounded-lg transition-all duration-200",
+                "cursor-pointer px-5 py-2 text-sm font-semibold rounded-lg transition-all duration-200",
                 activeTab === "assignments"
                   ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200",
@@ -208,7 +225,7 @@ export function Tasks() {
                 resetForms();
               }}
               className={cn(
-                "px-5 py-2 text-sm font-semibold rounded-lg transition-all duration-200",
+                "cursor-pointer px-5 py-2 text-sm font-semibold rounded-lg transition-all duration-200",
                 activeTab === "exams"
                   ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200",
@@ -223,7 +240,7 @@ export function Tasks() {
               resetForms();
               setIsAdding(!isAdding);
             }}
-            className="hidden sm:flex shadow-sm"
+            className="hidden sm:flex shadow-sm cursor-pointer"
           >
             <Plus className="mr-2 h-4 w-4" /> Nova{" "}
             {activeTab === "assignments" ? "Tarefa" : "Prova"}
@@ -236,7 +253,7 @@ export function Tasks() {
           resetForms();
           setIsAdding(!isAdding);
         }}
-        className="w-full sm:hidden shadow-sm"
+        className="w-full sm:hidden shadow-sm cursor-pointer"
       >
         <Plus className="mr-2 h-4 w-4" /> Nova{" "}
         {activeTab === "assignments" ? "Tarefa" : "Prova"}
@@ -279,7 +296,7 @@ export function Tasks() {
                         subjectId: e.target.value,
                       })
                     }
-                    className="flex h-10 w-full rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:focus-visible:ring-indigo-400"
+                    className="cursor-pointer flex h-10 w-full rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:focus-visible:ring-indigo-400"
                     required
                   >
                     <option value="" disabled>
@@ -297,6 +314,7 @@ export function Tasks() {
                     Data de Entrega *
                   </label>
                   <Input
+                    className="cursor-pointer"
                     type="date"
                     value={newAssignment.dueDate}
                     onChange={(e) =>
@@ -325,10 +343,15 @@ export function Tasks() {
                 </div>
               </div>
               <div className="flex justify-end gap-2 pt-2">
-                <Button type="button" variant="ghost" onClick={resetForms}>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="cursor-pointer"
+                  onClick={resetForms}
+                >
                   Cancelar
                 </Button>
-                <Button type="submit">
+                <Button type="submit" className="cursor-pointer">
                   {editingAssignmentId
                     ? "Guardar Alterações"
                     : "Guardar Tarefa"}
@@ -370,7 +393,7 @@ export function Tasks() {
                     onChange={(e) =>
                       setNewExam({ ...newExam, subjectId: e.target.value })
                     }
-                    className="flex h-10 w-full rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:focus-visible:ring-indigo-400"
+                    className="cursor-pointer flex h-10 w-full rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:focus-visible:ring-indigo-400"
                     required
                   >
                     <option value="" disabled>
@@ -388,6 +411,7 @@ export function Tasks() {
                     Data *
                   </label>
                   <Input
+                    className="cursor-pointer"
                     type="date"
                     value={newExam.date}
                     onChange={(e) =>
@@ -408,7 +432,7 @@ export function Tasks() {
                         priority: e.target.value as Priority,
                       })
                     }
-                    className="flex h-10 w-full rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:focus-visible:ring-indigo-400"
+                    className="cursor-pointer flex h-10 w-full rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:focus-visible:ring-indigo-400"
                   >
                     <option value="low">Baixa</option>
                     <option value="medium">Média</option>
@@ -417,10 +441,15 @@ export function Tasks() {
                 </div>
               </div>
               <div className="flex justify-end gap-2 pt-2">
-                <Button type="button" variant="ghost" onClick={resetForms}>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="cursor-pointer"
+                  onClick={resetForms}
+                >
                   Cancelar
                 </Button>
-                <Button type="submit">
+                <Button type="submit" className="cursor-pointer">
                   {editingExamId ? "Guardar Alterações" : "Guardar Prova"}
                 </Button>
               </div>
@@ -466,10 +495,9 @@ export function Tasks() {
           {sortedAssignments.map((assignment) => {
             const subject = subjects.find((s) => s.id === assignment.subjectId);
             const isCompleted = assignment.status === "completed";
+            const dateObj = parseLocal(assignment.dueDate);
             const isOverdue =
-              isPast(new Date(assignment.dueDate)) &&
-              !isToday(new Date(assignment.dueDate)) &&
-              !isCompleted;
+              isPast(dateObj) && !isToday(dateObj) && !isCompleted;
 
             return (
               <Card
@@ -488,7 +516,7 @@ export function Tasks() {
                         status: isCompleted ? "pending" : "completed",
                       })
                     }
-                    className="mt-1 sm:mt-0 shrink-0 text-slate-300 dark:text-slate-600 hover:text-emerald-500 dark:hover:text-emerald-400 transition-colors"
+                    className="cursor-pointer mt-1 sm:mt-0 flex-shrink-0 text-slate-300 dark:text-slate-600 hover:text-emerald-500 dark:hover:text-emerald-400 transition-colors"
                   >
                     {isCompleted ? (
                       <CheckCircle2 className="h-6 w-6 text-emerald-500 dark:text-emerald-400" />
@@ -496,7 +524,7 @@ export function Tasks() {
                       <Circle className="h-6 w-6" />
                     )}
                   </button>
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 cursor-default">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
                       <p
                         className={cn(
@@ -528,11 +556,9 @@ export function Tasks() {
                           )}
                         >
                           <CalendarIcon className="h-3.5 w-3.5" />
-                          {format(
-                            new Date(assignment.dueDate),
-                            "d 'de' MMM, yyyy",
-                            { locale: ptBR },
-                          )}
+                          {format(dateObj, "d 'de' MMM, yyyy", {
+                            locale: ptBR,
+                          })}
                         </span>
                       </div>
                     </div>
@@ -542,12 +568,12 @@ export function Tasks() {
                       </p>
                     )}
                   </div>
-                  <div className="flex items-center gap-1 shrink-0">
+                  <div className="flex items-center gap-1 flex-shrink-0">
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => handleEditAssignment(assignment)}
-                      className="text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+                      className="cursor-pointer text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
                     >
                       <Edit2 className="h-4 w-4" />
                     </Button>
@@ -555,7 +581,7 @@ export function Tasks() {
                       variant="ghost"
                       size="icon"
                       onClick={() => deleteAssignment(assignment.id)}
-                      className="text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      className="cursor-pointer text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -572,8 +598,8 @@ export function Tasks() {
         <div className="space-y-3">
           {sortedExams.map((exam) => {
             const subject = subjects.find((s) => s.id === exam.subjectId);
-            const isPastExam =
-              isPast(new Date(exam.date)) && !isToday(new Date(exam.date));
+            const dateObj = parseLocal(exam.date);
+            const isPastExam = isPast(dateObj) && !isToday(dateObj);
 
             return (
               <Card
@@ -586,7 +612,7 @@ export function Tasks() {
                 )}
               >
                 <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center gap-4">
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 cursor-default">
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="font-bold text-lg text-slate-900 dark:text-white truncate">
                         {exam.title}
@@ -622,7 +648,7 @@ export function Tasks() {
                       </div>
                       <span className="flex items-center gap-1.5 font-medium text-slate-600 dark:text-slate-400">
                         <CalendarIcon className="h-4 w-4" />
-                        {format(new Date(exam.date), "EEEE, d 'de' MMM, yyyy", {
+                        {format(dateObj, "EEEE, d 'de' MMM, yyyy", {
                           locale: ptBR,
                         })}
                       </span>
@@ -647,7 +673,7 @@ export function Tasks() {
                           })
                         }
                         className={cn(
-                          "text-sm font-semibold rounded-lg border-0 py-1.5 pl-3 pr-8 focus:ring-2 focus:ring-indigo-600 dark:focus:ring-indigo-400 transition-colors cursor-pointer outline-none",
+                          "cursor-pointer text-sm font-semibold rounded-lg border-0 py-1.5 pl-3 pr-8 focus:ring-2 focus:ring-indigo-600 dark:focus:ring-indigo-400 transition-colors outline-none",
                           exam.studyStatus === "ready"
                             ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300"
                             : exam.studyStatus === "studying"
@@ -664,7 +690,7 @@ export function Tasks() {
                       variant="ghost"
                       size="icon"
                       onClick={() => handleEditExam(exam)}
-                      className="text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+                      className="cursor-pointer text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
                     >
                       <Edit2 className="h-4 w-4" />
                     </Button>
@@ -672,7 +698,7 @@ export function Tasks() {
                       variant="ghost"
                       size="icon"
                       onClick={() => deleteExam(exam.id)}
-                      className="text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      className="cursor-pointer text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
